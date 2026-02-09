@@ -35,6 +35,8 @@ def select_next_issue(state: AgentState) -> AgentState:
 def analyze_issue(state: AgentState) -> AgentState:
     """Analyze the current issue and plan a fix.
     
+    Fetches rule details from SonarQube API to enrich the prompt.
+    
     Returns:
         Updated state with analysis in messages
     """
@@ -57,6 +59,24 @@ def analyze_issue(state: AgentState) -> AgentState:
         # Fallback if language detection fails
         context = None
     
+    # Fetch rule details from SonarQube API
+    rule_description = ""
+    try:
+        from debt_zero_agent.sonarqube import SonarQubeClient
+        
+        sonar_url = state.get("sonar_url", "https://sonarcloud.io")
+        client = SonarQubeClient(base_url=sonar_url)
+        rule = client.get_rule(issue.rule)
+        
+        if rule:
+            # Strip HTML tags for cleaner prompt
+            import re
+            clean_desc = re.sub(r'<[^>]+>', '', rule.htmlDesc)
+            rule_description = f"\n**Rule Details**:\n{clean_desc[:500]}"
+    except Exception as e:
+        # Continue without rule details if API fails
+        pass
+    
     # Create analysis prompt
     llm = get_llm(state["llm_provider"])
     
@@ -67,7 +87,7 @@ def analyze_issue(state: AgentState) -> AgentState:
         "type": issue.type,
         "file_path": file_path,
         "line": issue.line or "N/A",
-        "message": issue.message,
+        "message": issue.message + rule_description,
         "node_type": context.node_type if context else "N/A",
         "node_text": context.node_text[:100] if context else "N/A",
         "parent_type": context.parent_type if context else "N/A",

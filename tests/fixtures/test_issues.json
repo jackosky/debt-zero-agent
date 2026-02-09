@@ -1,0 +1,73 @@
+{
+    "total": 4,
+    "p": 1,
+    "ps": 100,
+    "issues": [
+        {
+            "key": "AYzKb-test-001",
+            "rule": "python:S1481",
+            "severity": "MINOR",
+            "component": "test-project:tests/fixtures/test_repo/sample.py",
+            "message": "Remove the unused local variable 'tax_rate'.",
+            "line": 6,
+            "textRange": {
+                "startLine": 6,
+                "endLine": 6,
+                "startOffset": 4,
+                "endOffset": 12
+            },
+            "type": "CODE_SMELL",
+            "tags": [
+                "unused"
+            ]
+        },
+        {
+            "key": "AYzKb-test-002",
+            "rule": "python:S1192",
+            "severity": "MAJOR",
+            "component": "test-project:tests/fixtures/test_repo/sample.py",
+            "message": "Define a constant instead of duplicating this literal 'production' 3 times.",
+            "line": 17,
+            "textRange": {
+                "startLine": 17,
+                "endLine": 17,
+                "startOffset": 14,
+                "endOffset": 26
+            },
+            "type": "CODE_SMELL",
+            "tags": [
+                "design"
+            ]
+        },
+        {
+            "key": "AYzKb-test-003",
+            "rule": "python:S134",
+            "severity": "CRITICAL",
+            "component": "test-project:tests/fixtures/test_repo/sample.py",
+            "message": "Refactor this code to not nest more than 3 control flow statements.",
+            "line": 28,
+            "type": "CODE_SMELL",
+            "tags": [
+                "brain-overload"
+            ]
+        },
+        {
+            "key": "AYzKb-test-004",
+            "rule": "python:S1871",
+            "severity": "MAJOR",
+            "component": "test-project:tests/fixtures/test_repo/sample.py",
+            "message": "Either merge this branch with the identical one or change one of the implementations.",
+            "line": 39,
+            "textRange": {
+                "startLine": 39,
+                "endLine": 40,
+                "startOffset": 8,
+                "endOffset": 20
+            },
+            "type": "CODE_SMELL",
+            "tags": [
+                "suspicious"
+            ]
+        }
+    ]
+}
