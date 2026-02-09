@@ -22,16 +22,24 @@ poetry install
 ### Basic Usage
 
 ```bash
-# Dry run (preview fixes)
+# Option 1: Fetch issues automatically from SonarQube API
+export SONAR_TOKEN=your-token
+poetry run debt-zero-agent /path/to/repo --fetch-issues your-project-key --dry-run
+
+# Option 2: Use pre-downloaded issues JSON
 poetry run debt-zero-agent /path/to/repo --issues issues.json --dry-run
 
 # Apply fixes with OpenAI
 export OPENAI_API_KEY=your-key
-poetry run debt-zero-agent /path/to/repo --issues issues.json
+poetry run debt-zero-agent /path/to/repo --fetch-issues your-project-key
 
 # Apply fixes with Anthropic
 export ANTHROPIC_API_KEY=your-key
-poetry run debt-zero-agent /path/to/repo --issues issues.json --llm anthropic
+poetry run debt-zero-agent /path/to/repo --fetch-issues your-project-key --llm anthropic
+
+# Apply fixes with Google Gemini
+export GOOGLE_API_KEY=your-key
+poetry run debt-zero-agent /path/to/repo --fetch-issues your-project-key --llm gemini
 ```
 
 ### Options
@@ -42,13 +50,19 @@ positional arguments:
 
 options:
   -h, --help            Show help message
-  -i, --issues ISSUES   Path to SonarQube issues JSON file (required)
+  -i, --issues ISSUES   Path to SonarQube issues JSON file
+  --fetch-issues PROJECT_KEY
+                        Fetch issues from SonarQube API (requires SONAR_TOKEN)
+  --sonar-url URL       SonarQube server URL (default: https://sonarcloud.io)
   --dry-run             Show proposed fixes without applying them
-  --llm {openai,anthropic}
+  --llm {openai,anthropic,gemini}
                         LLM provider to use (default: openai)
   --max-retries MAX_RETRIES
                         Maximum retry attempts per issue (default: 3)
+  --limit LIMIT         Maximum number of issues to process (default: 10)
 ```
+
+**Note**: Either `--issues` or `--fetch-issues` must be specified, but not both.
 
 ### Getting SonarQube Issues
 

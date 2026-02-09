@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -25,6 +26,56 @@ def load_issues(issues_path: str) -> list:
     return response.issues
 
 
+def fetch_issues_from_api(
+    project_key: str,
+    sonar_url: str = "https://sonarcloud.io",
+    token: str | None = None,
+    limit: int = 10,
+) -> list:
+    """Fetch issues directly from SonarQube API.
+    
+    Args:
+        project_key: SonarQube project key
+        sonar_url: SonarQube server URL
+        token: Authentication token (optional, reads from SONAR_TOKEN env var)
+        limit: Maximum number of issues to fetch (default: 10)
+        
+    Returns:
+        List of SonarQubeIssue objects
+    """
+    import requests
+    
+    token = token or os.getenv("SONAR_TOKEN")
+    if not token:
+        print("Warning: SONAR_TOKEN not set, API may be rate-limited", file=sys.stderr)
+    
+    url = f"{sonar_url.rstrip('/')}/api/issues/search"
+    params = {
+        "componentKeys": project_key,
+        "types": "CODE_SMELL,BUG,VULNERABILITY",
+        "resolved": "false",
+        "ps": min(limit, 500),  # Page size, capped at API limit
+    }
+    
+    try:
+        response = requests.get(
+            url,
+            params=params,
+            auth=(token, "") if token else None,
+            timeout=30,
+        )
+        response.raise_for_status()
+        data = response.json()
+        
+        response_obj = IssueSearchResponse(**data)
+        issues = response_obj.issues[:limit]  # Enforce limit
+        print(f"Fetched {len(issues)} issues from {sonar_url}")
+        return issues
+    except Exception as e:
+        print(f"Error fetching issues from API: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
 def main() -> None:
     """Main entry point for the application."""
     parser = argparse.ArgumentParser(
@@ -38,8 +89,19 @@ def main() -> None:
     
     parser.add_argument(
         "-i", "--issues",
-        required=True,
         help="Path to SonarQube issues JSON file",
+    )
+    
+    parser.add_argument(
+        "--fetch-issues",
+        metavar="PROJECT_KEY",
+        help="Fetch issues from SonarQube API (requires SONAR_TOKEN env var)",
+    )
+    
+    parser.add_argument(
+        "--sonar-url",
+        default="https://sonarcloud.io",
+        help="SonarQube server URL (default: https://sonarcloud.io)",
     )
     
     parser.add_argument(
@@ -50,7 +112,7 @@ def main() -> None:
     
     parser.add_argument(
         "--llm",
-        choices=["openai", "anthropic"],
+        choices=["openai", "anthropic", "gemini"],
         default="openai",
         help="LLM provider to use (default: openai)",
     )
@@ -62,7 +124,21 @@ def main() -> None:
         help="Maximum retry attempts per issue (default: 3)",
     )
     
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=10,
+        help="Maximum number of issues to process (default: 10)",
+    )
+    
     args = parser.parse_args()
+    
+    # Validate that either --issues or --fetch-issues is provided
+    if not args.issues and not args.fetch_issues:
+        parser.error("Either --issues or --fetch-issues must be specified")
+    
+    if args.issues and args.fetch_issues:
+        parser.error("Cannot specify both --issues and --fetch-issues")
     
     # Validate repo path
     repo_path = Path(args.repo_path).resolve()
@@ -72,8 +148,19 @@ def main() -> None:
     
     # Load issues
     try:
-        issues = load_issues(args.issues)
-        print(f"Loaded {len(issues)} issues from {args.issues}")
+        if args.fetch_issues:
+            issues = fetch_issues_from_api(
+                project_key=args.fetch_issues,
+                sonar_url=args.sonar_url,
+                limit=args.limit,
+            )
+        else:
+            issues = load_issues(args.issues)
+            print(f"Loaded {len(issues)} issues from {args.issues}")
+            # Apply limit to loaded issues too
+            if len(issues) > args.limit:
+                print(f"Limiting to first {args.limit} issues")
+                issues = issues[:args.limit]
     except Exception as e:
         print(f"Error loading issues: {e}", file=sys.stderr)
         sys.exit(1)

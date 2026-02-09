@@ -1,13 +1,14 @@
-"""LLM factory for dual provider support (OpenAI and Anthropic)."""
+"""LLM factory for multi-provider support (OpenAI, Anthropic, Google Gemini)."""
 
 import os
 from typing import Literal
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.language_models import BaseChatModel
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 
-LLMProvider = Literal["openai", "anthropic"]
+LLMProvider = Literal["openai", "anthropic", "gemini"]
 
 
 def get_llm(provider: LLMProvider = "openai", temperature: float = 0.0) -> BaseChatModel:
@@ -45,5 +46,16 @@ def get_llm(provider: LLMProvider = "openai", temperature: float = 0.0) -> BaseC
             api_key=api_key,
         )
     
+    elif provider == "gemini":
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            raise ValueError("GOOGLE_API_KEY environment variable not set")
+        
+        return ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash-exp",
+            temperature=temperature,
+            google_api_key=api_key,
+        )
+    
     else:
-        raise ValueError(f"Invalid provider: {provider}. Must be 'openai' or 'anthropic'")
+        raise ValueError(f"Invalid provider: {provider}. Must be 'openai', 'anthropic', or 'gemini'")
