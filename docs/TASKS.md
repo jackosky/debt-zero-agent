@@ -25,12 +25,12 @@
 ---
 
 ## Phase 4: Tools
-- [ ] Create `tools/file_reader.py`
-- [ ] Create `tools/code_search.py`
-- [ ] Create `tools/file_writer.py`
-- [ ] Create `tools/diff_tool.py`
-- [ ] Write unit tests for tools
-- [ ] **Review**: Verify tools work with sample repo
+- [x] Create `tools/file_reader.py`
+- [x] Create `tools/code_search.py`
+- [x] Create `tools/file_writer.py`
+- [x] Create `tools/diff_tool.py`
+- [x] Write unit tests for tools
+- [x] **Review**: Verify tools work with sample repo
 
 ---
 
