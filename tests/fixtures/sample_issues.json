@@ -1,0 +1,44 @@
+{
+    "total": 2,
+    "p": 1,
+    "ps": 100,
+    "issues": [
+        {
+            "key": "AYzKb1234abcd",
+            "rule": "python:S1481",
+            "severity": "MINOR",
+            "component": "debt-zero-agent:src/main.py",
+            "message": "Remove the unused local variable 'unused_var'.",
+            "line": 42,
+            "textRange": {
+                "startLine": 42,
+                "endLine": 42,
+                "startOffset": 4,
+                "endOffset": 14
+            },
+            "type": "CODE_SMELL",
+            "tags": [
+                "unused",
+                "convention"
+            ]
+        },
+        {
+            "key": "AYzKb5678efgh",
+            "rule": "python:S1192",
+            "severity": "MAJOR",
+            "component": "debt-zero-agent:src/utils.py",
+            "message": "Define a constant instead of duplicating this literal 3 times.",
+            "line": 15,
+            "textRange": {
+                "startLine": 15,
+                "endLine": 15,
+                "startOffset": 12,
+                "endOffset": 28
+            },
+            "type": "CODE_SMELL",
+            "tags": [
+                "design"
+            ]
+        }
+    ]
+}

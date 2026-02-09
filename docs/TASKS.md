@@ -8,10 +8,10 @@
 ---
 
 ## Phase 2: Models
-- [ ] Create `models/issue.py` - SonarQube Pydantic models
-- [ ] Create `models/fix.py` - Fix result models
-- [ ] Write unit tests for models
-- [ ] **Review**: Validate models parse sample SonarQube response
+- [x] Create `models/issue.py` - SonarQube Pydantic models
+- [x] Create `models/fix.py` - Fix result models
+- [x] Write unit tests for models
+- [x] **Review**: Validate models parse sample SonarQube response
 
 ---
 
