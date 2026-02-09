@@ -45,11 +45,12 @@
 
 ---
 
-## Phase 6: CLI & Integration
-- [ ] Update `cli.py` with argparse
-- [ ] Wire up agent invocation
-- [ ] Write CLI argument tests
-- [ ] **Review**: End-to-end dry-run test
+## Phase 6: CLI Integration
+- [x] Update `cli.py` with argument parsing
+- [x] Wire agent workflow to CLI
+- [x] Add issue loading from JSON
+- [x] Write CLI tests
+- [x] **Review**: Test CLI help and basic invocationest
 
 ---
 
