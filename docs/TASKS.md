@@ -16,11 +16,11 @@
 ---
 
 ## Phase 3: Validation & AST
-- [ ] Create `validation/ast_validator.py` - Python syntax validation
-- [ ] Create `validation/tree_sitter.py` - Multi-lang syntax check
-- [ ] Create `validation/locator.py` - AST-based issue localization
-- [ ] Write unit tests for validation module
-- [ ] **Review**: Test locator with real code samples
+- [x] Create `validation/ast_validator.py` - Python syntax validation
+- [x] Create `validation/tree_sitter.py` - Multi-lang syntax check
+- [x] Create `validation/locator.py` - AST-based issue localization
+- [x] Write unit tests for validation module
+- [x] **Review**: Test locator with real code samples
 
 ---
 
