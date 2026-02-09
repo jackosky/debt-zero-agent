@@ -50,30 +50,54 @@ def fetch_issues_from_api(
         print("Warning: SONAR_TOKEN not set, API may be rate-limited", file=sys.stderr)
     
     url = f"{sonar_url.rstrip('/')}/api/issues/search"
-    params = {
-        "componentKeys": project_key,
-        "types": "CODE_SMELL,BUG,VULNERABILITY",
-        "resolved": "false",
-        "ps": min(limit, 500),  # Page size, capped at API limit
-    }
+    filtered_issues = []
+    page = 1
+    page_size = 100  # Fetch more per page to account for filtering
     
-    try:
-        response = requests.get(
-            url,
-            params=params,
-            auth=(token, "") if token else None,
-            timeout=30,
-        )
-        response.raise_for_status()
-        data = response.json()
+    # Keep fetching until we have enough non-external issues
+    while len(filtered_issues) < limit:
+        params = {
+            "componentKeys": project_key,
+            "types": "CODE_SMELL,BUG,VULNERABILITY",
+            "resolved": "false",
+            "ps": page_size,
+            "p": page,
+        }
         
-        response_obj = IssueSearchResponse(**data)
-        issues = response_obj.issues[:limit]  # Enforce limit
-        print(f"Fetched {len(issues)} issues from {sonar_url}")
-        return issues
-    except Exception as e:
-        print(f"Error fetching issues from API: {e}", file=sys.stderr)
-        sys.exit(1)
+        try:
+            response = requests.get(
+                url,
+                params=params,
+                auth=(token, "") if token else None,
+                timeout=30,
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+            response_obj = IssueSearchResponse(**data)
+            
+            # Filter out external rules (external_roslyn, external_*, etc.)
+            page_filtered = [
+                issue for issue in response_obj.issues
+                if not issue.rule.startswith("external_")
+            ]
+            
+            filtered_issues.extend(page_filtered)
+            
+            # Check if we've reached the end
+            total_issues = data.get("total", 0)
+            if page * page_size >= total_issues or not response_obj.issues:
+                break
+            
+            page += 1
+            
+        except Exception as e:
+            print(f"Error fetching issues from API: {e}", file=sys.stderr)
+            sys.exit(1)
+    
+    issues = filtered_issues[:limit]  # Enforce limit
+    print(f"Fetched {len(issues)} issues from {sonar_url} (excluded external rules)")
+    return issues
 
 
 def main() -> None:

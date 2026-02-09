@@ -5,7 +5,7 @@ A LangChain-based agent that automatically fixes SonarQube issues using AST-base
 ## 🎯 Features
 
 - **AST-based issue localization** - Precise targeting using tree-sitter
-- **Dual LLM support** - OpenAI GPT-4o and Anthropic Claude 3.5 Sonnet
+- **Triple LLM support** - OpenAI GPT-4o, Anthropic Claude 3.5 Sonnet, Google Gemini Pro
 - **Multi-language validation** - Python AST + tree-sitter syntax checking
 - **Native tool integration** - ripgrep for search, Unix diff for diffs
 - **Dry-run mode** - Preview fixes before applying

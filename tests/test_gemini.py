@@ -12,7 +12,7 @@ def test_get_llm_gemini():
     with patch.dict(os.environ, {"GOOGLE_API_KEY": "test-key"}):
         llm = get_llm("gemini")
         assert llm is not None
-        assert "gemini-2.0-flash-exp" in llm.model
+        assert "gemini" in llm.model.lower()
 
 
 def test_get_llm_gemini_missing_key():

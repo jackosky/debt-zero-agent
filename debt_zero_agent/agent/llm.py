@@ -51,8 +51,9 @@ def get_llm(provider: LLMProvider = "openai", temperature: float = 0.0) -> BaseC
         if not api_key:
             raise ValueError("GOOGLE_API_KEY environment variable not set")
         
+        # Using gemini-2.0-flash (verified available via API)
         return ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash-exp",
+            model="gemini-2.0-flash",
             temperature=temperature,
             google_api_key=api_key,
         )
