@@ -1,0 +1,17 @@
+[project]
+name = "debt-zero-agent"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Jacek Poreda", email = "jckporeda@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+debt-zero-agent = "debt_zero_agent.cli:main"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
