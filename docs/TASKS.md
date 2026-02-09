@@ -35,13 +35,13 @@
 ---
 
 ## Phase 5: Agent Core
-- [ ] Create `agent/llm.py` - LLM factory
-- [ ] Create `agent/state.py` - Agent state model
-- [ ] Create `prompts/templates.py`
-- [ ] Create `agent/nodes.py` - Node functions
-- [ ] Create `agent/graph.py` - LangGraph workflow
-- [ ] Write unit tests for nodes
-- [ ] **Review**: Test graph with mocked LLM
+- [x] Create `agent/llm.py` - LLM factory (OpenAI/Anthropic)
+- [x] Create `agent/state.py` - Agent state TypedDict
+- [x] Create `prompts/templates.py` - Prompt templates
+- [x] Create `agent/nodes.py` - LangGraph nodes
+- [x] Create `agent/graph.py` - Workflow definition
+- [x] Write unit tests for agent components
+- [x] **Review**: Verify all tests pass (37/37)
 
 ---
 
