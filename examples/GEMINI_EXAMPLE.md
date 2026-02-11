@@ -2,9 +2,17 @@
 
 This example demonstrates how to run the debt-zero-agent on the `sonarlint-visualstudio` repository using Google Gemini.
 
+
+## Why Gemini?
+
+✅ **Free Tier Available**: Google often provides a generous free tier for the Gemini API (check their pricing page).
+✅ **Fast**: The Flash models are optimized for speed.
+✅ **Large Context**: Good for analyzing larger files.
+
 ## Prerequisites
 
 1. **API Keys**:
+   - Get a free API key from [Google AI Studio](https://aistudio.google.com/)
    ```bash
    export GOOGLE_API_KEY="your-gemini-api-key"
    export SONAR_TOKEN="your-sonarqube-token"  # Optional
