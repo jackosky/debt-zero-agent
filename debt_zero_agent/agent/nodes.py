@@ -240,16 +240,96 @@ def validate_fix(state: AgentState) -> AgentState:
                 )
                 state["failed_fixes"].append(failed_fix)
                 state["current_issue_index"] += 1
+            else:
+                # Retries remain - provide feedback
+                print(f"  ⚠ Validation failed (attempt {state['retry_count']}/{state['max_retries']})")
+                
+                # Generate diff of the failed attempt
+                failed_diff = generate_diff.invoke({
+                    "original": original_content,
+                    "modified": fixed_content,
+                    "file_path": file_path,
+                })
+                
+                # Build escalating feedback based on retry count
+                if state["retry_count"] == 1:
+                    strictness = "Be extra careful with syntax."
+                elif state["retry_count"] == 2:
+                    strictness = "CRITICAL: This is your final attempt. Only change the MINIMUM necessary."
+                else:
+                    strictness = ""
+                
+                feedback_msg = f"""Your previous fix attempt had validation errors:
+
+**Errors**: {'; '.join(validation.errors)}
+
+**Your attempted changes**:
+```diff
+{failed_diff}
+```
+
+Please fix these validation errors and try again. {strictness}"""
+                
+                state["messages"].append(HumanMessage(content=feedback_msg))
             
             return state
     
-    # Validation passed, apply the fix
+    # Syntax validation passed - now check diff metrics
     diff = generate_diff.invoke({
         "original": original_content,
         "modified": fixed_content,
         "file_path": file_path,
     })
     
+    # Import diff stats function
+    from debt_zero_agent.tools import generate_diff_stats
+    
+    stats = generate_diff_stats(original_content, fixed_content)
+    lines_changed = stats["additions"] + stats["deletions"]
+    
+    # Get thresholds from state (with defaults)
+    max_lines_changed = state.get("max_lines_changed", 30)
+    max_change_ratio = state.get("max_change_ratio", 0.1)
+    
+    file_lines = stats["original_lines"]
+    change_ratio = lines_changed / max(file_lines, 1)
+    
+    # Check if changes are excessive
+    if lines_changed > max_lines_changed or change_ratio > max_change_ratio:
+        print(f"  ⚠ Suspicious diff: {lines_changed} lines changed ({change_ratio:.1%} of file)")
+        
+        state["retry_count"] += 1
+        state["_validation_passed"] = False
+        
+        if state["retry_count"] >= state["max_retries"]:
+            # Max retries reached
+            failed_fix = FailedFix(
+                issue_key=issue.key,
+                file_path=file_path,
+                status=FixStatus.VALIDATION_ERROR,
+                error_message=f"Excessive changes: {lines_changed} lines ({change_ratio:.1%} of file)",
+                llm_provider=state["llm_provider"],
+                iterations=state["retry_count"],
+            )
+            state["failed_fixes"].append(failed_fix)
+            state["current_issue_index"] += 1
+        else:
+            # Provide feedback for retry
+            feedback_msg = f"""Your fix changed {lines_changed} lines ({change_ratio:.1%} of the file), which is excessive.
+
+**Diff**:
+```diff
+{diff}
+```
+
+The issue is on line {issue.line or 'N/A'}. Please make a MINIMAL fix that only modifies the affected code.
+Focus on changing just the specific line(s) needed to fix the issue."""
+            
+            state["messages"].append(HumanMessage(content=feedback_msg))
+        
+        return state
+    
+    # Validation passed, apply the fix
     # Write the fix
     write_result = write_file.invoke({
         "repo_path": state["repo_path"],

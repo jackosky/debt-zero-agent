@@ -155,6 +155,20 @@ def main() -> None:
         help="Maximum number of issues to process (default: 10)",
     )
     
+    parser.add_argument(
+        "--max-lines-changed",
+        type=int,
+        default=30,
+        help="Maximum lines a single fix can change (default: 30)",
+    )
+    
+    parser.add_argument(
+        "--max-change-ratio",
+        type=float,
+        default=0.1,
+        help="Maximum file change ratio (default: 0.1 = 10%%)",
+    )
+    
     args = parser.parse_args()
     
     # Validate that either --issues or --fetch-issues is provided
@@ -206,6 +220,8 @@ def main() -> None:
         "failed_fixes": [],
         "retry_count": 0,
         "max_retries": args.max_retries,
+        "max_lines_changed": args.max_lines_changed,
+        "max_change_ratio": args.max_change_ratio,
     }
     
     # Build and run the workflow
