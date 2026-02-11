@@ -142,6 +142,11 @@ def main() -> None:
     )
     
     parser.add_argument(
+        "--model",
+        help="Specific model to use (overrides provider default). Examples: gpt-4o, claude-3-5-sonnet-latest",
+    )
+    
+    parser.add_argument(
         "--max-retries",
         type=int,
         default=3,
@@ -207,10 +212,27 @@ def main() -> None:
         print("No issues to fix!")
         return
     
+    # Batch issues by file and sort bottom-up
+    from debt_zero_agent.agent.nodes import batch_issues_by_file
+    
+    print(f"Batching {len(issues)} issues by file...")
+    batched_issues = batch_issues_by_file(issues)
+    
+    # Show batching summary
+    from collections import defaultdict
+    by_file = defaultdict(int)
+    for issue in batched_issues:
+        by_file[issue.get_file_path()] += 1
+    
+    print(f"Issues grouped into {len(by_file)} files:")
+    for file_path, count in sorted(by_file.items()):
+        print(f"  - {file_path}: {count} issue(s)")
+    print()
+    
     # Initialize agent state
     initial_state: AgentState = {
         "repo_path": str(repo_path),
-        "issues": issues,
+        "issues": batched_issues,
         "dry_run": args.dry_run,
         "llm_provider": args.llm,
         "current_issue_index": 0,
@@ -222,6 +244,9 @@ def main() -> None:
         "max_retries": args.max_retries,
         "max_lines_changed": args.max_lines_changed,
         "max_change_ratio": args.max_change_ratio,
+        "_validation_passed": False,
+        "file_cache": {},
+        "model_name": args.model,
     }
     
     # Build and run the workflow

@@ -31,3 +31,21 @@ class AgentState(TypedDict):
     # Retry tracking
     retry_count: int
     max_retries: int
+    
+    # Diff verification thresholds
+    max_lines_changed: int
+    max_change_ratio: float
+    
+    # Validation flags
+    _validation_passed: bool
+    
+    # Temporary state between nodes
+    _temp_original_content: str
+    _temp_fixed_content: str
+    _temp_modified_files: dict[str, str] # path -> content
+    
+    # File content cache for batch processing
+    file_cache: dict[str, str]
+    
+    # Model override
+    model_name: str | None

@@ -11,12 +11,17 @@ from langchain_openai import ChatOpenAI
 LLMProvider = Literal["openai", "anthropic", "gemini"]
 
 
-def get_llm(provider: LLMProvider = "openai", temperature: float = 0.0) -> BaseChatModel:
+def get_llm(
+    provider: LLMProvider = "openai",
+    temperature: float = 0.0,
+    model_name: str | None = None,
+) -> BaseChatModel:
     """Get LLM instance based on provider.
     
     Args:
         provider: LLM provider to use
         temperature: Sampling temperature (0.0 = deterministic)
+        model_name: Specific model name to use (overrides provider default)
         
     Returns:
         Configured LLM instance
@@ -30,7 +35,7 @@ def get_llm(provider: LLMProvider = "openai", temperature: float = 0.0) -> BaseC
             raise ValueError("OPENAI_API_KEY environment variable not set")
         
         return ChatOpenAI(
-            model="gpt-4o",
+            model=model_name or "gpt-4o",
             temperature=temperature,
             api_key=api_key,
         )
@@ -40,8 +45,9 @@ def get_llm(provider: LLMProvider = "openai", temperature: float = 0.0) -> BaseC
         if not api_key:
             raise ValueError("ANTHROPIC_API_KEY environment variable not set")
         
+        # Updated to latest stable Sonnet (simulated for 2026 context)
         return ChatAnthropic(
-            model="claude-3-5-sonnet-20241022",
+            model=model_name or "claude-sonnet-4-5-20250929",
             temperature=temperature,
             api_key=api_key,
         )
@@ -51,9 +57,9 @@ def get_llm(provider: LLMProvider = "openai", temperature: float = 0.0) -> BaseC
         if not api_key:
             raise ValueError("GOOGLE_API_KEY environment variable not set")
         
-        # Using gemini-2.0-flash (verified available via API)
+        # Using gemini-2.0-flash (fast and capable)
         return ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
+            model=model_name or "gemini-2.0-flash",
             temperature=temperature,
             google_api_key=api_key,
         )
