@@ -108,6 +108,8 @@ def apply_fix(state: AgentState) -> AgentState:
     Returns:
         Updated state with fix applied
     """
+    import json
+    
     issue = state["current_issue"]
     if not issue:
         return state
@@ -120,26 +122,79 @@ def apply_fix(state: AgentState) -> AgentState:
         "file_path": file_path,
     })
     
-    # For now, use a simple prompt to get the fix
-    # In a real implementation, this would be more sophisticated
+    # Use targeted fix prompt for JSON-based edits
+    from debt_zero_agent.prompts.templates import TARGETED_FIX_PROMPT
+    from debt_zero_agent.tools import EditError, apply_edit
+    
     llm = get_llm(state["llm_provider"])
     
-    fix_prompt = f"""Based on the previous analysis, generate the complete fixed file content.
-
-Original file: {file_path}
-Issue: {issue.message}
-
-Return ONLY the fixed code, no explanations."""
+    # Build the prompt with accumulated context from previous messages
+    prompt_values = {
+        "message": issue.message,
+        "file_path": file_path,
+        "line": issue.line or "N/A",
+        "file_content": original_content,
+    }
     
-    response = llm.invoke([
-        SystemMessage(content="You are a code fixing assistant."),
-        HumanMessage(content=fix_prompt),
-    ])
+    messages = TARGETED_FIX_PROMPT.format_messages(**prompt_values)
     
-    fixed_content = response.content
+    # Use accumulated messages for context (includes analysis from previous step)
+    full_messages = state["messages"] + messages
+    response = llm.invoke(full_messages)
+    
+    # Try to parse JSON response
+    try:
+        # Extract JSON from response (handle markdown code blocks)
+        content = response.content.strip()
+        if content.startswith("```"):
+            # Remove markdown code block markers
+            lines = content.split("\n")
+            content = "\n".join(lines[1:-1]) if len(lines) > 2 else content
+        
+        edit_data = json.loads(content)
+        old_code = edit_data.get("old_code", "")
+        new_code = edit_data.get("new_code", "")
+        
+        if not old_code or not new_code:
+            raise ValueError("Missing old_code or new_code in JSON response")
+        
+        # Apply the targeted edit
+        fixed_content = apply_edit(original_content, old_code, new_code)
+        
+        print(f"  ✓ Applied targeted edit ({len(old_code)} → {len(new_code)} chars)")
+        
+    except (json.JSONDecodeError, ValueError, EditError) as e:
+        # Fallback: if JSON parsing or edit application fails, add feedback and retry
+        print(f"  ⚠ Targeted edit failed: {e}")
+        
+        state["retry_count"] += 1
+        
+        if state["retry_count"] >= state["max_retries"]:
+            # Max retries reached, mark as failed
+            from debt_zero_agent.models import FailedFix, FixStatus
+            failed_fix = FailedFix(
+                issue_key=issue.key,
+                file_path=file_path,
+                status=FixStatus.VALIDATION_ERROR,
+                error_message=f"Failed to generate valid edit: {str(e)}",
+                llm_provider=state["llm_provider"],
+                iterations=state["retry_count"],
+            )
+            state["failed_fixes"].append(failed_fix)
+            state["current_issue_index"] += 1
+            return state
+        
+        # Add feedback for retry
+        feedback_msg = f"""Your previous fix attempt failed: {str(e)}
+
+Please try again with a valid JSON response containing "old_code" and "new_code" fields.
+Make sure to copy the old_code EXACTLY from the file, including all whitespace."""
+        
+        state["messages"].append(HumanMessage(content=feedback_msg))
+        return state
     
     # Store in state for validation
-    state["messages"].append(HumanMessage(content=fix_prompt))
+    state["messages"].append(HumanMessage(content=str(messages[-1].content)))
     state["messages"].append(response)
     
     # Temporarily store for validation
@@ -171,6 +226,7 @@ def validate_fix(state: AgentState) -> AgentState:
         if not validation.valid:
             # Validation failed
             state["retry_count"] += 1
+            state["_validation_passed"] = False
             
             if state["retry_count"] >= state["max_retries"]:
                 # Max retries reached, mark as failed
@@ -215,6 +271,7 @@ def validate_fix(state: AgentState) -> AgentState:
     )
     state["successful_fixes"].append(fix_result)
     state["current_issue_index"] += 1
+    state["_validation_passed"] = True
     
     return state
 

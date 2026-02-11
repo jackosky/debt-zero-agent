@@ -5,6 +5,45 @@ from pathlib import Path
 from langchain_core.tools import tool
 
 
+class EditError(Exception):
+    """Raised when an edit cannot be applied."""
+    pass
+
+
+def apply_edit(original_content: str, old_code: str, new_code: str) -> str:
+    """Apply a search-and-replace edit to content.
+    
+    Args:
+        original_content: Original file content
+        old_code: Exact string to find and replace
+        new_code: Replacement string
+        
+    Returns:
+        Modified content with the replacement applied
+        
+    Raises:
+        EditError: If old_code is not found or appears multiple times
+    """
+    # Count occurrences
+    count = original_content.count(old_code)
+    
+    if count == 0:
+        raise EditError(
+            f"Could not find the old_code in the file. "
+            f"The code to replace must match exactly, including whitespace."
+        )
+    
+    if count > 1:
+        raise EditError(
+            f"Found {count} occurrences of old_code. "
+            f"The code to replace must be unique. "
+            f"Include more context lines to make it unique."
+        )
+    
+    # Apply the replacement
+    return original_content.replace(old_code, new_code, 1)
+
+
 @tool
 def write_file(repo_path: str, file_path: str, content: str, dry_run: bool = False) -> dict:
     """Write modified content to a file.

@@ -8,7 +8,7 @@ SYSTEM_PROMPT = """You are an expert code quality engineer specializing in fixin
 Your task is to analyze code issues and propose precise, minimal fixes that:
 1. Address the specific SonarQube rule violation
 2. Maintain code functionality and style
-3. Make minimal changes beyond the fix
+3. Make ONLY the minimal changes necessary - do not reformat, reorder, or modify unrelated code
 4. Follow language best practices
 
 You have access to tools for:
@@ -84,4 +84,34 @@ VALIDATION_FEEDBACK_PROMPT = ChatPromptTemplate.from_messages([
 ```
 
 Please revise the fix to address these validation errors."""),
+])
+
+
+# Prompt for targeted fix (search-and-replace format)
+TARGETED_FIX_PROMPT = ChatPromptTemplate.from_messages([
+    ("system", SYSTEM_PROMPT),
+    ("human", """Based on the previous analysis, generate a targeted fix for this issue.
+
+**Issue**: {message}
+**File**: {file_path}
+**Line**: {line}
+
+**File content**:
+```
+{file_content}
+```
+
+Return your fix as a JSON object with the following structure:
+{{
+  "old_code": "the exact lines to replace (copied from the original)",
+  "new_code": "the replacement lines"
+}}
+
+CRITICAL RULES:
+1. Copy the old_code EXACTLY from the file content above - including all whitespace and indentation
+2. Include enough context (surrounding lines) to make the match unique
+3. Only change what's necessary to fix the issue - do not reformat or modify unrelated code
+4. The old_code must appear exactly once in the file
+
+Return ONLY the JSON object, no explanations."""),
 ])
